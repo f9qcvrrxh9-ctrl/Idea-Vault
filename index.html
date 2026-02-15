@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Whimsy Vault</title>
+    <title>Thought Vault</title>
     
     <style>
         :root {
@@ -40,15 +40,12 @@
 
         .app-container { padding: 80px 25px 120px; max-width: 420px; margin: auto; }
 
-        /* --- Input Receptor (Fixing the Glow Cutoff) --- */
         .input-box {
             background: var(--glass); border-radius: 32px; padding: 25px;
             backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px);
             border: 1px solid var(--border);
-            /* Massive shadow with extra spread to prevent clipping */
-            box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 40px var(--active-accent);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 30px var(--active-accent);
             transition: all 0.8s ease;
-            /* Force GPU rendering to prevent invisible clipping lines */
             transform: translateZ(0);
             will-change: box-shadow;
         }
@@ -60,8 +57,10 @@
             overflow-y: auto; scrollbar-width: none;
         }
         textarea::-webkit-scrollbar { display: none; }
+        textarea::placeholder { color: rgba(255,255,255,0.2); transition: opacity 0.3s ease; }
 
-        .icon-row { display: flex; justify-content: space-between; margin: 30px 0; gap: 8px; }
+        .icon-row { display: flex; justify-content: space-between; gap: 8px; }
+        #inputIcons { margin: 45px 0 35px; } 
 
         .sq-btn {
             width: 44px; height: 44px; border-radius: 14px;
@@ -76,23 +75,25 @@
         .ic4 svg { fill: var(--c4); } .ic5 svg { fill: var(--c5); }
 
         .sq-btn svg { width: 20px; height: 20px; opacity: 0.6; transition: 0.4s; }
-        .sq-btn.active { transform: scale(1.2) translateY(-6px); border-color: white; }
-        
-        #inputIcons .sq-btn.active { box-shadow: 0 0 25px var(--active-accent); }
+        .sq-btn.active { transform: scale(1.15) translateY(-4px); border-color: white; }
+        #inputIcons .sq-btn.active { box-shadow: 0 0 15px var(--active-accent); }
         #inputIcons .sq-btn:not(.active) svg { opacity: 0.35; }
 
-        /* Save Button (Tightened Margin) */
         .save-btn {
             width: 100%; padding: 22px; border-radius: 22px; 
             background: rgba(0, 0, 0, 0.5); border: 1px solid var(--active-accent);
             color: var(--active-accent); text-shadow: 0 0 15px var(--active-accent);
             font-weight: 800; text-transform: uppercase; letter-spacing: 4px; font-size: 13px;
             transition: all 0.6s ease; 
-            margin-bottom: 45px; /* Pulled Archive up by 25px */
+            margin-bottom: 35px; /* Lifted header by reducing this margin */
         }
 
-        /* --- Archive UI (Tightened Spacing) --- */
-        .archive-header { font-size: 10px; text-transform: uppercase; letter-spacing: 5px; opacity: 0.3; margin-bottom: 15px; text-align: center; }
+        /* --- Header Positioning --- */
+        .archive-header { 
+            font-size: 10px; text-transform: uppercase; letter-spacing: 5px; opacity: 0.3; 
+            margin-bottom: 22px; /* Increased space above search bar */
+            text-align: center; 
+        }
 
         #searchWrapper {
             background: rgba(255,255,255,0.04); border-radius: 20px; padding: 15px 20px;
@@ -102,6 +103,7 @@
         }
         #searchWrapper input { background: transparent; border: none; color: white; width: 80%; outline: none; font-size: 17px; }
 
+        #filterIcons { margin: 30px 0; }
         .all-txt { font-size: 10px; font-weight: 900; text-transform: uppercase; color: var(--warm-white); opacity: 0.7; }
         #filterIcons .all-btn.active .all-txt { opacity: 1; text-shadow: 0 0 10px var(--warm-white); }
         #filterIcons .all-btn.active { box-shadow: 0 0 15px rgba(232, 230, 225, 0.3); }
@@ -138,14 +140,14 @@
 
     <div class="app-container">
         <div class="input-box">
-            <textarea id="noteInput" placeholder="New thought..."></textarea>
+            <textarea id="noteInput" placeholder="Something funny happened?"></textarea>
         </div>
         <div class="icon-row" id="inputIcons"></div>
         <button class="save-btn" id="saveAction" onclick="saveNote()">Save to Vault</button>
 
-        <div class="archive-header">Archive</div>
+        <div class="archive-header">Thought Vault</div>
         <div id="searchWrapper">
-            <input type="text" id="searchInput" placeholder="Search entries..." oninput="renderNotes()">
+            <input type="text" id="searchInput" placeholder="Search the vault..." oninput="renderNotes()">
             <button onclick="exportFilteredNotes()" style="background:none; border:none; opacity:0.6;"><svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button>
         </div>
 
@@ -169,6 +171,7 @@
         const tagColors = ['var(--c0)', 'var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)'];
         const tagMoods = ['var(--v0)', 'var(--v1)', 'var(--v2)', 'var(--v3)', 'var(--v4)', 'var(--v5)'];
         const tagLabels = ["Funny", "Idea", "Remember", "Fact", "Coincidences", "Other"];
+        const tagPrompts = ["Something funny happened?", "What's the big idea?", "Something to remember?", "A fascinating fact?", "What are the odds?", "A random spark..."];
         const orbRadialPath = [['30%','10%'], ['70%','10%'], ['85%','35%'], ['70%','65%'], ['30%','65%'], ['15%','35%']];
 
         let writeIdx = 0; let archiveFilter = 'All'; let editingId = null;
@@ -182,6 +185,7 @@
                 document.documentElement.style.setProperty('--active-vibe', tagMoods[5-i]);
                 document.documentElement.style.setProperty('--orb-x', orbRadialPath[i][0]);
                 document.documentElement.style.setProperty('--orb-y', orbRadialPath[i][1]);
+                document.getElementById('noteInput').placeholder = tagPrompts[i];
                 document.querySelectorAll('#inputIcons .sq-btn').forEach((b, idx) => b.classList.toggle('active', idx===i));
             };
             document.getElementById('inputIcons').appendChild(b1);
@@ -228,6 +232,8 @@
             const n = data.find(note => note.id === id);
             document.getElementById('noteInput').value = n.text;
             editingId = id; document.getElementById('saveAction').innerText = "Update Note";
+            const tagIdx = tagLabels.indexOf(n.tag);
+            document.getElementById('inputIcons').children[tagIdx].click();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -262,11 +268,11 @@
             const query = document.getElementById('searchInput').value.toLowerCase();
             const data = JSON.parse(localStorage.getItem('vaultData')) || [];
             const filtered = data.filter(n => (archiveFilter === 'All' || n.tag === archiveFilter) && n.text.toLowerCase().includes(query));
-            let content = "WHIMSY VAULT EXPORT\n\n";
+            let content = "THOUGHT VAULT EXPORT\n\n";
             filtered.forEach(n => content += `${n.date} [${n.tag}]\n${n.text}\n\n---\n\n`);
             const blob = new Blob([content], { type: 'text/plain' });
             const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-            link.download = `Vault_Export.txt`; link.click();
+            link.download = `Thought_Vault_Export.txt`; link.click();
         }
 
         window.onload = () => { renderNotes(); document.getElementById('inputIcons').children[0].click(); };
