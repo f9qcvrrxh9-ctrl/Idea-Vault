@@ -40,12 +40,17 @@
 
         .app-container { padding: 80px 25px 120px; max-width: 420px; margin: auto; }
 
+        /* --- Input Receptor (Fixing the Glow Cutoff) --- */
         .input-box {
             background: var(--glass); border-radius: 32px; padding: 25px;
             backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px);
             border: 1px solid var(--border);
+            /* Massive shadow with extra spread to prevent clipping */
             box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 40px var(--active-accent);
             transition: all 0.8s ease;
+            /* Force GPU rendering to prevent invisible clipping lines */
+            transform: translateZ(0);
+            will-change: box-shadow;
         }
 
         textarea {
@@ -56,7 +61,7 @@
         }
         textarea::-webkit-scrollbar { display: none; }
 
-        .icon-row { display: flex; justify-content: space-between; margin: 35px 0; gap: 8px; }
+        .icon-row { display: flex; justify-content: space-between; margin: 30px 0; gap: 8px; }
 
         .sq-btn {
             width: 44px; height: 44px; border-radius: 14px;
@@ -66,32 +71,32 @@
             transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1); padding: 0;
         }
 
-        .ic0 svg { fill: var(--c0); }
-        .ic1 svg { fill: var(--c1); }
-        .ic2 svg { fill: var(--c2); }
-        .ic3 svg { fill: var(--c3); }
-        .ic4 svg { fill: var(--c4); }
-        .ic5 svg { fill: var(--c5); }
+        .ic0 svg { fill: var(--c0); } .ic1 svg { fill: var(--c1); }
+        .ic2 svg { fill: var(--c2); } .ic3 svg { fill: var(--c3); }
+        .ic4 svg { fill: var(--c4); } .ic5 svg { fill: var(--c5); }
 
         .sq-btn svg { width: 20px; height: 20px; opacity: 0.6; transition: 0.4s; }
-        
         .sq-btn.active { transform: scale(1.2) translateY(-6px); border-color: white; }
-        .sq-btn.active svg { opacity: 1; filter: brightness(1.2); }
-
+        
         #inputIcons .sq-btn.active { box-shadow: 0 0 25px var(--active-accent); }
         #inputIcons .sq-btn:not(.active) svg { opacity: 0.35; }
 
+        /* Save Button (Tightened Margin) */
         .save-btn {
             width: 100%; padding: 22px; border-radius: 22px; 
             background: rgba(0, 0, 0, 0.5); border: 1px solid var(--active-accent);
             color: var(--active-accent); text-shadow: 0 0 15px var(--active-accent);
             font-weight: 800; text-transform: uppercase; letter-spacing: 4px; font-size: 13px;
-            transition: all 0.6s ease; margin-bottom: 70px;
+            transition: all 0.6s ease; 
+            margin-bottom: 45px; /* Pulled Archive up by 25px */
         }
+
+        /* --- Archive UI (Tightened Spacing) --- */
+        .archive-header { font-size: 10px; text-transform: uppercase; letter-spacing: 5px; opacity: 0.3; margin-bottom: 15px; text-align: center; }
 
         #searchWrapper {
             background: rgba(255,255,255,0.04); border-radius: 20px; padding: 15px 20px;
-            border: 1px solid var(--border); margin-bottom: 25px;
+            border: 1px solid var(--border); margin-bottom: 20px;
             display: flex; align-items: center; justify-content: space-between;
             box-shadow: 0 0 20px var(--filter-accent); transition: box-shadow 0.6s ease;
         }
@@ -138,9 +143,9 @@
         <div class="icon-row" id="inputIcons"></div>
         <button class="save-btn" id="saveAction" onclick="saveNote()">Save to Vault</button>
 
-        <div class="archive-header" style="text-align:center; font-size:10px; letter-spacing:5px; opacity:0.3; margin-bottom:20px;">ARCHIVE</div>
+        <div class="archive-header">Archive</div>
         <div id="searchWrapper">
-            <input type="text" id="searchInput" placeholder="Search the vault..." oninput="renderNotes()">
+            <input type="text" id="searchInput" placeholder="Search entries..." oninput="renderNotes()">
             <button onclick="exportFilteredNotes()" style="background:none; border:none; opacity:0.6;"><svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></button>
         </div>
 
@@ -196,6 +201,7 @@
         }
 
         function saveNote() {
+            if (window.navigator.vibrate) window.navigator.vibrate(15);
             const val = document.getElementById('noteInput').value.trim();
             if(!val) return;
             let data = JSON.parse(localStorage.getItem('vaultData')) || [];
